@@ -18,14 +18,9 @@ public class Server {
     // WARNING - Do not uncomment more than one of the below, otherwise it will take
     // up a lot of RAM.
     static Set<Long> tableSHS_L = Collections.synchronizedSet(new HashSet<Long>(INITIAL_CAPACITY));
-    // static Set<String> tableSHS_S = Collections.synchronizedSet(new
-    // HashSet<String>(INITIAL_CAPACITY)); // interested if this would be faster
-    // than Long
-    // static ConcurrentHashMap<Long, Long> tableCHM_L = new ConcurrentHashMap<Long,
-    // Long>(INITIAL_CAPACITY); // if ever need to store a V for each K
-    // static ConcurrentHashMap<String, Long> tableCHM_S = new
-    // ConcurrentHashMap<String, Long>(INITIAL_CAPACITY); // if ever need to store a
-    // V for each K
+    // static Set<String> tableSHS_S = Collections.synchronizedSet(new HashSet<String>(INITIAL_CAPACITY)); // interested if this would be faster than Long
+    // static ConcurrentHashMap<Long, Long> tableCHM_L = new ConcurrentHashMap<Long, Long>(INITIAL_CAPACITY); // if ever need to store a V for each K
+    // static ConcurrentHashMap<String, Long> tableCHM_S = newConcurrentHashMap<String, Long>(INITIAL_CAPACITY); // if ever need to store a V for each K
 
     // Timers
     static void timerStart() {
@@ -65,7 +60,7 @@ public class Server {
 
     static void serveOneConnection(Socket activeSocket) {
         System.out.println("New client connected");
-        try (BufferedReader in = new BufferedReader(new InputStreamReader(activeSocket.getInputStream()));) {
+        try (BufferedReader in = new BufferedReader(new InputStreamReader(activeSocket.getInputStream()))) {
             timerStart();
             String row;
             long num = -1;
@@ -106,12 +101,12 @@ public class Server {
     }
 
     public static void main(String[] args) {
+        // Loop forever, or until we get the "terminate" message
         int port = 4000;
-
         try (ServerSocket passiveSocket = new ServerSocket(port);) {
             System.out.println("Server is listening on port " + port);
 
-            try (Socket activeSocket = passiveSocket.accept();) {
+            try (Socket activeSocket = passiveSocket.accept()) {
                 serveOneConnection(activeSocket);
             } catch (IOException ex) {
                 System.out.println("activeSocket exception: " + ex.getMessage());
