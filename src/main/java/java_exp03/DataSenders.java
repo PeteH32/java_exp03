@@ -6,7 +6,7 @@ import java.io.*;
 
 public class DataSenders {
 
-    public static void sendDataStream() {
+    public static void sendDataStream(int nIterations) {
         String hostname = "127.0.0.1";
         int port = 4000;
 
@@ -24,7 +24,8 @@ public class DataSenders {
         try {
             PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
             Random rand = new Random();
-            for (int i = 0; i < 10; i++) {
+            for (int i = 0; i < nIterations; i++) {
+                // 9 digits = 0 to 999,999,999 = 1 Billion
                 out.printf("%09d\n", rand.nextInt(999999999));
             }
             System.out.println("Sending 'terminate'");
@@ -41,7 +42,8 @@ public class DataSenders {
     }
 
     public static void main(String[] args) {
-        sendDataStream();
+        int nIterations = Integer.parseInt(args[0]);
+        sendDataStream(nIterations);
     }
 
 }
