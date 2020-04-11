@@ -32,6 +32,7 @@ public class ClientThread extends Thread {
             System.out.println("Statistics: ");
             System.out.println("    nRows: " + nRows);
             System.out.println("      nLongs: " + nLongs);
+            System.out.println("        nUniqueLongs: " + (nLongs - nDupedLongs));
             System.out.println("        nDupedLongs: " + nDupedLongs);
             System.out.println("      nNotLongs: " + nNotLongs);
         }
