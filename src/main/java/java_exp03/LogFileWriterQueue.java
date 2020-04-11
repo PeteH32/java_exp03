@@ -32,8 +32,7 @@ public class LogFileWriterQueue extends Thread {
         // Open output file
         final Path logfile = Paths.get("numbers.log");
         final Charset charset = Charset.forName("US-ASCII");
-        try (BufferedWriter writer = Files.newBufferedWriter(logfile, charset, StandardOpenOption.CREATE,
-                StandardOpenOption.WRITE)) {
+        try (BufferedWriter writer = Files.newBufferedWriter(logfile, charset)) {
             // Loop forever, or until we get drain queue and get interrupted.
             boolean bShutdownRequested = false;
             while (!bShutdownRequested) {
