@@ -17,7 +17,7 @@ public class Main {
         final LogFileWriterQueue logWriterQ = new LogFileWriterQueue();
         logWriterQ.start();
 
-        // Spawn thread to write to log file
+        // Spawn thread to listen for client connections
         ListenerThread r = new ListenerThread1Client(logWriterQ);
         Thread t = new Thread(r);
         t.start();
