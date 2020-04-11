@@ -1,4 +1,4 @@
-package java_exp03;
+package java_exp03.tester;
 
 import java.net.*;
 import java.util.Random;
@@ -24,6 +24,7 @@ public class DataSenders {
         try {
             PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
             Random rand = new Random();
+            System.out.println("Doing iterations: " + nIterations);
             for (int i = 0; i < nIterations; i++) {
                 // 9 digits = 0 to 999,999,999 = 1 Billion
                 out.printf("%09d\n", rand.nextInt(999999999));

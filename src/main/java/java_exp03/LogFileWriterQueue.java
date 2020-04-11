@@ -11,23 +11,22 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 public class LogFileWriterQueue extends Thread {
 
-    public void enqueueUniqueLong(final long n) {
+    public LogFileWriterQueue() {
+        super("LogFileWriterQueue");
+    }
+
+    public void enqueueUniqueLong(final String row) {
         try {
             // This will block if the queue is full.
-            writeQ.put(n);
+            writeQ.put(row);
         } catch (final InterruptedException ex) {
             System.out.println("InterruptedException in enqueueUniqueLong: " + ex.getMessage());
         }
     }
 
-    // WARNING - If you are low on RAM, be careful with this setting. (I only have 8
-    // GBytes total.)
+    // WARNING: Be careful with this setting. I only have 8 GBytes of RAM.
     static final int INITIAL_CAPACITY = 500000;
-    private final LinkedBlockingQueue<Long> writeQ = new LinkedBlockingQueue<Long>(INITIAL_CAPACITY);
-
-    public LogFileWriterQueue() {
-        super("LogFileWriter");
-    }
+    private final LinkedBlockingQueue<String> writeQ = new LinkedBlockingQueue<String>(INITIAL_CAPACITY);
 
     public void run() {
         // Open output file
@@ -36,16 +35,15 @@ public class LogFileWriterQueue extends Thread {
         try (BufferedWriter writer = Files.newBufferedWriter(logfile, charset, StandardOpenOption.CREATE,
                 StandardOpenOption.WRITE)) {
             // Loop forever, or until we get drain queue and get interrupted.
-            long n;
+            String strNum;
             while (true) {
                 // If queue is empty, this will block until something put into it.
                 try {
-                    System.out.println("LogFileWriterQueue.main: Checking the queue...");
-                    n = writeQ.take();
-                    System.out.println("LogFileWriterQueue.main: Got item from queue: " + n);
-                    final String s = Long.toString(n);
-                    System.out.println("LogFileWriterQueue.main: Writing item to file: '" + s + "'  " + s.length());
-                    writer.write(s, 0, s.length());
+                    // System.out.println("LogFileWriterQueue.main: Checking the queue...");
+                    strNum = writeQ.take();
+                    // System.out.println("LogFileWriterQueue.main: Got item from queue: " + strNum);
+                    String row = strNum + "\n";
+                    writer.write(row, 0, row.length());
                 } catch (final InterruptedException ex) {
                     System.out.println("InterruptedException when doing writeQ.take(): " + ex.getMessage());
                 }
