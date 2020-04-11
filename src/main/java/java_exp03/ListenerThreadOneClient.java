@@ -27,6 +27,9 @@ public class ListenerThreadOneClient extends ListenerThread {
                 // clientThread.start();
                 clientThread.serveOneConnection();
 
+                // Tell main to terminate.
+                Main.RequestToTerminate();
+
             } catch (final IOException ex) {
                 System.out.println("active socket exception: " + ex.getMessage());
             }
@@ -36,6 +39,8 @@ public class ListenerThreadOneClient extends ListenerThread {
         }
         timerStop();
         printDuration();
+
+        System.out.println("ListenerThreadOneClient: Leaving my run() now.");
     }
 
 }

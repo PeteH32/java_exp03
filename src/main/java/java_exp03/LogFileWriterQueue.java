@@ -35,23 +35,38 @@ public class LogFileWriterQueue extends Thread {
         try (BufferedWriter writer = Files.newBufferedWriter(logfile, charset, StandardOpenOption.CREATE,
                 StandardOpenOption.WRITE)) {
             // Loop forever, or until we get drain queue and get interrupted.
-            String strNum;
-            while (true) {
-                // If queue is empty, this will block until something put into it.
+            boolean bShutdownRequested = false;
+            while (!bShutdownRequested) {
                 try {
-                    // System.out.println("LogFileWriterQueue.main: Checking the queue...");
-                    strNum = writeQ.take();
-                    // System.out.println("LogFileWriterQueue.main: Got item from queue: " + strNum);
+                    // System.out.println("LogFileWriterQueue.run: Checking the queue...");
+
+                    // If queue is empty, this will block until something put into it,
+                    // or another thread calls interrupt on us.
+                    String strNum = writeQ.take();
+
+                    // System.out.println("LogFileWriterQueue.run: Got item from queue: " + strNum);
+
                     String row = strNum + "\n";
                     writer.write(row, 0, row.length());
                 } catch (final InterruptedException ex) {
-                    System.out.println("InterruptedException when doing writeQ.take(): " + ex.getMessage());
+                    System.out.println("LogFileWriterQueue: InterruptedException when doing writeQ.take(): " + ex.getMessage());
+                    // Drain the queue and write all remaining items to our log file.
+                    while (!writeQ.isEmpty()) {
+                        String strNum = writeQ.remove();
+                        String row = strNum + "\n";
+                        writer.write(row, 0, row.length());
+                    }
+                    writer.flush();
+                    writer.close();
+                    System.out.println("LogFileWriterQueue: Done draining the queue, and flushed the log file.");
+                    bShutdownRequested = true;
                 }
             }
         } catch (final IOException ex) {
             System.err.format("IOException: %s%n", ex);
         }
 
+        System.out.println("LogFileWriterQueue: Leaving my run() now.");
     }
 
 }
