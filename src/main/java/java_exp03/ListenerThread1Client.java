@@ -3,9 +3,9 @@ package java_exp03;
 import java.io.*;
 import java.net.*;
 
-public class ListenerThreadOneClient extends ListenerThread {
+public class ListenerThread1Client extends ListenerThread {
 
-    public ListenerThreadOneClient(LogFileWriterQueue logWriterQ) {
+    public ListenerThread1Client(LogFileWriterQueue logWriterQ) {
         super(logWriterQ);
     }
 
