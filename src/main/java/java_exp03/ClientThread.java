@@ -38,7 +38,7 @@ public class ClientThread extends Thread {
     }
 
     void serveOneConnection() {
-        System.out.println("New client connected");
+        System.out.println("ClientThread: New client connected");
         try (BufferedReader in = new BufferedReader(new InputStreamReader(activeSocket.getInputStream()))) {
             String strLine;
             boolean isLong;
@@ -52,7 +52,7 @@ public class ClientThread extends Thread {
                     isLong = true;
                     Stats.nLongs++;
                 } catch (final NumberFormatException ex) {
-                    System.out.println("Not a long: " + ex.getMessage());
+                    System.out.println("ClientThread: Not a long: " + ex.getMessage());
                     isLong = false;
                 }
 
@@ -60,7 +60,7 @@ public class ClientThread extends Thread {
                 if (isLong) {
                     isNotDupe = hashsetUniqueLongs.add(strLine);
                     if (isNotDupe) {
-                        // System.out.println("isNotDupe so enqueuing to writer: " + strLine);
+                        // System.out.println("ClientThread: isNotDupe so enqueuing to writer: " + strLine);
                         logWriterQ.enqueueUniqueLong(strLine);
                     } else {
                         Stats.nDupedLongs++;
@@ -69,19 +69,32 @@ public class ClientThread extends Thread {
                     Stats.nNotLongs++;
                 }
 
-                // System.out.printf("row=%s  isLong=%b  isNotDupe=%b\n", row, isLong, isNotDupe);
-                if (strLine.equals("terminate")) {
-                    // TODO
+                // System.out.printf("ClientThread: row=%s isLong=%b isNotDupe=%b\n", row, isLong, isNotDupe);
+                // Check for non-longs: (1) "terminate", or (2) bad input
+                if (!isLong) {
+                    if (strLine.equals("terminate")) {
+                        // 9. If any connected client writes a single line with only the word
+                        // "terminate" followed by a server-native newline sequence, the Application
+                        // must disconnect all clients and perform a clean shutdown as quickly as
+                        // possible.
+                        // TODO - When multi-conn, send terminate request to Main thread.
+                        System.out.println("ClientThread: Received terminate command.");
+                    } else {
+                        // Bad input:
+                        // 7. Any data that does not conform to a valid line of input should be
+                        // discarded and the client connection terminated immediately and without
+                        // comment.
+                    }
                     break;
                 }
             }
-            System.out.println("Received terminate command. Exiting.\n");
+            System.out.println("ClientThread: Exiting.");
         } catch (final IOException ex) {
-            System.out.println("activeSocket exception: " + ex.getMessage());
+            System.out.println("ClientThread: activeSocket exception: " + ex.getMessage());
         }
         System.out.println("================================================================================");
         System.out.println("================================================================================");
-        System.out.println("Client connection ended");
+        System.out.println("ClientThread: Client connection ended");
         Stats.printStats();
         System.out.println("================================================================================");
         System.out.println("================================================================================");
