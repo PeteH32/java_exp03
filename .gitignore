@@ -7,3 +7,6 @@ build
 .vscode
 
 .DS_Store
+
+# The data file we write to
+numbers.log
