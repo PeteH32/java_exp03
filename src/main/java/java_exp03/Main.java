@@ -18,7 +18,7 @@ public class Main {
         logWriterQ.start();
 
         // Spawn thread to write to log file
-        ListenerThreadOneClient r = new ListenerThreadOneClient(logWriterQ);
+        ListenerThread r = new ListenerThread1Client(logWriterQ);
         Thread t = new Thread(r);
         t.start();
 
