@@ -65,6 +65,7 @@ public class ClientThread extends Thread {
                     if (isNotDupe) {
                         // System.out.println("ClientThread: isNotDupe so enqueuing to writer: " +
                         // strLine);
+
                         try {
                             logWriterQ.enqueueUniqueLong(strLine);
                         } catch (InterruptedException ex) {
@@ -85,6 +86,7 @@ public class ClientThread extends Thread {
 
                 // System.out.printf("ClientThread: row=%s isLong=%b isNotDupe=%b\n", row,
                 // isLong, isNotDupe);
+
                 // Check for non-longs: (1) "terminate", or (2) bad input
                 if (!isLong) {
                     if (strLine.equals("terminate")) {
@@ -95,13 +97,15 @@ public class ClientThread extends Thread {
                         // TODO - When multi-conn, send terminate request to Main thread.
                         System.out.println(
                                 "ClientThread (" + Thread.currentThread().getId() + "): Received terminate command.");
-                        // Tell main to terminate.
+                        // Tell Main.main() to terminate.
                         Main.RequestToTerminate();
                     } else {
                         // Bad input:
                         // 7. Any data that does not conform to a valid line of input should be
                         // discarded and the client connection terminated immediately and without
                         // comment.
+
+                        // We'll break out of our loop now. But not sending a terminate request to Main.main().
                     }
                     break;
                 }
