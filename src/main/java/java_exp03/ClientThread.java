@@ -20,15 +20,16 @@ public class ClientThread extends Thread {
 
     private Socket activeSocket = null;
     private LogFileWriterQueue logWriterQ;
+    private Stats stats = new Stats();
 
     // Statistics
-    static class Stats {
-        static long nRows = 0;
-        static long nLongs = 0;
-        static long nDupedLongs = 0;
-        static long nNotLongs = 0;
+    class Stats {
+        long nRows = 0;
+        long nLongs = 0;
+        long nDupedLongs = 0;
+        long nNotLongs = 0;
 
-        static void printStats() {
+        void printStats() {
             System.out.println("Statistics: ");
             System.out.println("    nRows: " + nRows);
             System.out.println("      nLongs: " + nLongs);
@@ -39,21 +40,22 @@ public class ClientThread extends Thread {
     }
 
     void serveOneConnection() {
-        System.out.println("ClientThread: New client connected");
+        System.out.println("ClientThread (" + Thread.currentThread().getId() + "): New client connected");
         try (BufferedReader in = new BufferedReader(new InputStreamReader(activeSocket.getInputStream()))) {
             String strLine;
             boolean isLong;
             while (true) {
                 strLine = in.readLine();
-                Stats.nRows++;
+                stats.nRows++;
 
                 try {
                     // Verify it is a valid number
                     Long.parseLong(strLine);
                     isLong = true;
-                    Stats.nLongs++;
+                    stats.nLongs++;
                 } catch (final NumberFormatException ex) {
-                    System.out.println("ClientThread: Not a long: " + ex.getMessage());
+                    System.out.println(
+                            "ClientThread (" + Thread.currentThread().getId() + "): Not a long: " + ex.getMessage());
                     isLong = false;
                 }
 
@@ -63,12 +65,22 @@ public class ClientThread extends Thread {
                     if (isNotDupe) {
                         // System.out.println("ClientThread: isNotDupe so enqueuing to writer: " +
                         // strLine);
-                        logWriterQ.enqueueUniqueLong(strLine);
+                        try {
+                            logWriterQ.enqueueUniqueLong(strLine);
+                        } catch (InterruptedException ex) {
+                            System.out.println("ClientThread (" + Thread.currentThread().getId()
+                                    + "): InterruptedException received while calling logWriterQ.enqueueUniqueLong().");
+                            if (Main.isTerminationRequested()) {
+                                System.out.println("ClientThread (" + Thread.currentThread().getId()
+                                        + "): Saw there was a request to terminate. So exiting my loop.");
+                                break;
+                            }
+                        }
                     } else {
-                        Stats.nDupedLongs++;
+                        stats.nDupedLongs++;
                     }
                 } else {
-                    Stats.nNotLongs++;
+                    stats.nNotLongs++;
                 }
 
                 // System.out.printf("ClientThread: row=%s isLong=%b isNotDupe=%b\n", row,
@@ -81,7 +93,8 @@ public class ClientThread extends Thread {
                         // must disconnect all clients and perform a clean shutdown as quickly as
                         // possible.
                         // TODO - When multi-conn, send terminate request to Main thread.
-                        System.out.println("ClientThread: Received terminate command.");
+                        System.out.println(
+                                "ClientThread (" + Thread.currentThread().getId() + "): Received terminate command.");
                         // Tell main to terminate.
                         Main.RequestToTerminate();
                     } else {
@@ -93,14 +106,15 @@ public class ClientThread extends Thread {
                     break;
                 }
             }
-            System.out.println("ClientThread: Exiting.");
+            System.out.println("ClientThread (" + Thread.currentThread().getId() + "): Exiting.");
         } catch (final IOException ex) {
-            System.out.println("ClientThread: activeSocket exception: " + ex.getMessage());
+            System.out.println("ClientThread (" + Thread.currentThread().getId() + "): activeSocket exception: "
+                    + ex.getMessage());
         }
         System.out.println("================================================================================");
         System.out.println("================================================================================");
-        System.out.println("ClientThread: Client connection ended");
-        Stats.printStats();
+        System.out.println("ClientThread (" + Thread.currentThread().getId() + "): Client connection ended");
+        stats.printStats();
         System.out.println("================================================================================");
         System.out.println("================================================================================");
     }
