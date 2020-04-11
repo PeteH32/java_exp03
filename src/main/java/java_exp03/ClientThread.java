@@ -14,16 +14,18 @@ public class ClientThread extends Thread {
         this.logWriterQ = logWriterQ;
     }
 
+    // Stats for this thread.
+    public Stats stats = new Stats();
+
     // WARNING: Be careful with this setting. I only have 8 GBytes of RAM.
     static final int INITIAL_CAPACITY = 100000;
     static Set<String> hashsetUniqueLongs = Collections.synchronizedSet(new HashSet<String>(INITIAL_CAPACITY));
 
     private Socket activeSocket = null;
     private LogFileWriterQueue logWriterQ;
-    private Stats stats = new Stats();
 
     // Statistics
-    class Stats {
+    public static class Stats {
         long nRows = 0;
         long nLongs = 0;
         long nDupedLongs = 0;
@@ -36,6 +38,13 @@ public class ClientThread extends Thread {
             System.out.println("        nUniqueLongs: " + (nLongs - nDupedLongs));
             System.out.println("        nDupedLongs: " + nDupedLongs);
             System.out.println("      nNotLongs: " + nNotLongs);
+        }
+
+        void addToStats(Stats newStats) {
+            this.nRows += newStats.nRows;
+            this.nLongs += newStats.nLongs;
+            this.nDupedLongs += newStats.nDupedLongs;
+            this.nNotLongs += newStats.nNotLongs;
         }
     }
 
@@ -94,7 +103,6 @@ public class ClientThread extends Thread {
                         // "terminate" followed by a server-native newline sequence, the Application
                         // must disconnect all clients and perform a clean shutdown as quickly as
                         // possible.
-                        // TODO - When multi-conn, send terminate request to Main thread.
                         System.out.println(
                                 "ClientThread (" + Thread.currentThread().getId() + "): Received terminate command.");
                         // Tell Main.main() to terminate.
@@ -105,7 +113,8 @@ public class ClientThread extends Thread {
                         // discarded and the client connection terminated immediately and without
                         // comment.
 
-                        // We'll break out of our loop now. But not sending a terminate request to Main.main().
+                        // We'll break out of our loop now. But not sending a terminate request to
+                        // Main.main().
                     }
                     break;
                 }
