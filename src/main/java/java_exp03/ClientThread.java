@@ -61,7 +61,8 @@ public class ClientThread extends Thread {
                 if (isLong) {
                     isNotDupe = hashsetUniqueLongs.add(strLine);
                     if (isNotDupe) {
-                        // System.out.println("ClientThread: isNotDupe so enqueuing to writer: " + strLine);
+                        // System.out.println("ClientThread: isNotDupe so enqueuing to writer: " +
+                        // strLine);
                         logWriterQ.enqueueUniqueLong(strLine);
                     } else {
                         Stats.nDupedLongs++;
@@ -70,7 +71,8 @@ public class ClientThread extends Thread {
                     Stats.nNotLongs++;
                 }
 
-                // System.out.printf("ClientThread: row=%s isLong=%b isNotDupe=%b\n", row, isLong, isNotDupe);
+                // System.out.printf("ClientThread: row=%s isLong=%b isNotDupe=%b\n", row,
+                // isLong, isNotDupe);
                 // Check for non-longs: (1) "terminate", or (2) bad input
                 if (!isLong) {
                     if (strLine.equals("terminate")) {
@@ -80,6 +82,8 @@ public class ClientThread extends Thread {
                         // possible.
                         // TODO - When multi-conn, send terminate request to Main thread.
                         System.out.println("ClientThread: Received terminate command.");
+                        // Tell main to terminate.
+                        Main.RequestToTerminate();
                     } else {
                         // Bad input:
                         // 7. Any data that does not conform to a valid line of input should be
