@@ -1,5 +1,7 @@
 
 buildit:
+	chmod u+x run_server.sh
+	chmod u+x run_testclients.sh
 	./gradlew build
 
 runserver:
