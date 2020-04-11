@@ -18,7 +18,8 @@ public class Main {
         logWriterQ.start();
 
         // Spawn thread to listen for client connections
-        ListenerThread r = new ListenerThread1Client(logWriterQ);
+        // ListenerThread r = new ListenerThread1Client(logWriterQ);
+        ListenerThread r = new ListenerThread5Client(logWriterQ);
         Thread t = new Thread(r);
         t.start();
 

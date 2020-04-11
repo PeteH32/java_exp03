@@ -13,7 +13,7 @@ public class ListenerThread5Client extends ListenerThread {
         // This class only does one client connection then exits. I used it for early testing.
         boolean isFirstClient = true;
         try (ServerSocket serverSocket = new ServerSocket(4000)) {
-            System.out.println("Server is listening on port now");
+            System.out.println("ListenerThread5Client: Server is listening on port now");
 
             try {
                 // Wait for client connections.
@@ -31,16 +31,16 @@ public class ListenerThread5Client extends ListenerThread {
                 Main.RequestToTerminate();
 
             } catch (final IOException ex) {
-                System.out.println("active socket exception: " + ex.getMessage());
+                System.out.println("ListenerThread5Client: active socket exception: " + ex.getMessage());
             }
         } catch (final IOException ex) {
-            System.out.println("serverSocket exception: " + ex.getMessage());
+            System.out.println("ListenerThread5Client: serverSocket exception: " + ex.getMessage());
             return;
         }
         timerStop();
         printDuration();
 
-        System.out.println("ListenerThreadOneClient: Leaving my run() now.");
+        System.out.println("ListenerThread5Client: Leaving my run() now.");
     }
 
 }
