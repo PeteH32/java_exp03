@@ -6,7 +6,6 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class LogFileWriterQueue extends Thread {
@@ -15,12 +14,14 @@ public class LogFileWriterQueue extends Thread {
         super("LogFileWriterQueue");
     }
 
-    public void enqueueUniqueLong(final String row) {
+    public void enqueueUniqueLong(final String row) throws InterruptedException {
         try {
             // This will block if the queue is full.
             writeQ.put(row);
         } catch (final InterruptedException ex) {
-            System.out.println("InterruptedException in enqueueUniqueLong: " + ex.getMessage());
+            System.out.println("Thread id=(" + Thread.currentThread().getId()
+                    + "): InterruptedException in enqueueUniqueLong: " + ex.getMessage());
+            throw ex;
         }
     }
 
@@ -48,7 +49,8 @@ public class LogFileWriterQueue extends Thread {
                     String row = strNum + "\n";
                     writer.write(row, 0, row.length());
                 } catch (final InterruptedException ex) {
-                    System.out.println("LogFileWriterQueue: InterruptedException when doing writeQ.take(): " + ex.getMessage());
+                    System.out.println(
+                            "LogFileWriterQueue: InterruptedException when doing writeQ.take(): " + ex.getMessage());
                     // Drain the queue and write all remaining items to our log file.
                     while (!writeQ.isEmpty()) {
                         String strNum = writeQ.remove();

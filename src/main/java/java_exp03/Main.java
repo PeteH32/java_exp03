@@ -7,6 +7,11 @@ public class Main {
         bTerminateRequested = true;
         mainThread.interrupt();
     }
+
+    public static boolean isTerminationRequested() {
+        return (bTerminateRequested);
+    }
+
     private static boolean bTerminateRequested = false;
     private static Thread mainThread;
 
@@ -20,21 +25,24 @@ public class Main {
         // Spawn thread to listen for client connections
         // ListenerThread r = new ListenerThread1Client(logWriterQ);
         ListenerThread r = new ListenerThread5Client(logWriterQ);
-        Thread t = new Thread(r);
-        t.start();
+        Thread listenerThread = new Thread(r);
+        listenerThread.start();
 
         // Wait for "terminated" message
-        synchronized (t) {
+        Object obj = new Object();
+        synchronized (obj) {
             while (!bTerminateRequested) {
                 try {
-                    t.wait();
+                    obj.wait();
                 } catch (InterruptedException e) {
                     System.out.println("Main.main: Got an interrupt.");
                 }
             }
             System.out.println("Main.main: Got request to terminate.");
         }
-        // Tell logWriterQ to empty the queue and exit.
+        // Tell listenerThread to exit.
+        listenerThread.interrupt();
+        // Tell logWriterQ to empty it's queue, flush it's buffer, and exit.
         logWriterQ.interrupt();
 
         System.out.println("Main.main: Leaving my main() now.");

@@ -14,6 +14,9 @@ public class ClientThread extends Thread {
         this.logWriterQ = logWriterQ;
     }
 
+    // Stats for this thread.
+    public Stats stats = new Stats();
+
     // WARNING: Be careful with this setting. I only have 8 GBytes of RAM.
     static final int INITIAL_CAPACITY = 100000;
     static Set<String> hashsetUniqueLongs = Collections.synchronizedSet(new HashSet<String>(INITIAL_CAPACITY));
@@ -22,13 +25,13 @@ public class ClientThread extends Thread {
     private LogFileWriterQueue logWriterQ;
 
     // Statistics
-    static class Stats {
-        static long nRows = 0;
-        static long nLongs = 0;
-        static long nDupedLongs = 0;
-        static long nNotLongs = 0;
+    public static class Stats {
+        long nRows = 0;
+        long nLongs = 0;
+        long nDupedLongs = 0;
+        long nNotLongs = 0;
 
-        static void printStats() {
+        void printStats() {
             System.out.println("Statistics: ");
             System.out.println("    nRows: " + nRows);
             System.out.println("      nLongs: " + nLongs);
@@ -36,24 +39,32 @@ public class ClientThread extends Thread {
             System.out.println("        nDupedLongs: " + nDupedLongs);
             System.out.println("      nNotLongs: " + nNotLongs);
         }
+
+        void addToStats(Stats newStats) {
+            this.nRows += newStats.nRows;
+            this.nLongs += newStats.nLongs;
+            this.nDupedLongs += newStats.nDupedLongs;
+            this.nNotLongs += newStats.nNotLongs;
+        }
     }
 
     void serveOneConnection() {
-        System.out.println("ClientThread: New client connected");
+        System.out.println("ClientThread (" + Thread.currentThread().getId() + "): New client connected");
         try (BufferedReader in = new BufferedReader(new InputStreamReader(activeSocket.getInputStream()))) {
             String strLine;
             boolean isLong;
             while (true) {
                 strLine = in.readLine();
-                Stats.nRows++;
+                stats.nRows++;
 
                 try {
                     // Verify it is a valid number
                     Long.parseLong(strLine);
                     isLong = true;
-                    Stats.nLongs++;
+                    stats.nLongs++;
                 } catch (final NumberFormatException ex) {
-                    System.out.println("ClientThread: Not a long: " + ex.getMessage());
+                    System.out.println(
+                            "ClientThread (" + Thread.currentThread().getId() + "): Not a long: " + ex.getMessage());
                     isLong = false;
                 }
 
@@ -61,16 +72,30 @@ public class ClientThread extends Thread {
                 if (isLong) {
                     isNotDupe = hashsetUniqueLongs.add(strLine);
                     if (isNotDupe) {
-                        // System.out.println("ClientThread: isNotDupe so enqueuing to writer: " + strLine);
-                        logWriterQ.enqueueUniqueLong(strLine);
+                        // System.out.println("ClientThread: isNotDupe so enqueuing to writer: " +
+                        // strLine);
+
+                        try {
+                            logWriterQ.enqueueUniqueLong(strLine);
+                        } catch (InterruptedException ex) {
+                            System.out.println("ClientThread (" + Thread.currentThread().getId()
+                                    + "): InterruptedException received while calling logWriterQ.enqueueUniqueLong().");
+                            if (Main.isTerminationRequested()) {
+                                System.out.println("ClientThread (" + Thread.currentThread().getId()
+                                        + "): Saw there was a request to terminate. So exiting my loop.");
+                                break;
+                            }
+                        }
                     } else {
-                        Stats.nDupedLongs++;
+                        stats.nDupedLongs++;
                     }
                 } else {
-                    Stats.nNotLongs++;
+                    stats.nNotLongs++;
                 }
 
-                // System.out.printf("ClientThread: row=%s isLong=%b isNotDupe=%b\n", row, isLong, isNotDupe);
+                // System.out.printf("ClientThread: row=%s isLong=%b isNotDupe=%b\n", row,
+                // isLong, isNotDupe);
+
                 // Check for non-longs: (1) "terminate", or (2) bad input
                 if (!isLong) {
                     if (strLine.equals("terminate")) {
@@ -78,25 +103,31 @@ public class ClientThread extends Thread {
                         // "terminate" followed by a server-native newline sequence, the Application
                         // must disconnect all clients and perform a clean shutdown as quickly as
                         // possible.
-                        // TODO - When multi-conn, send terminate request to Main thread.
-                        System.out.println("ClientThread: Received terminate command.");
+                        System.out.println(
+                                "ClientThread (" + Thread.currentThread().getId() + "): Received terminate command.");
+                        // Tell Main.main() to terminate.
+                        Main.RequestToTerminate();
                     } else {
                         // Bad input:
                         // 7. Any data that does not conform to a valid line of input should be
                         // discarded and the client connection terminated immediately and without
                         // comment.
+
+                        // We'll break out of our loop now. But not sending a terminate request to
+                        // Main.main().
                     }
                     break;
                 }
             }
-            System.out.println("ClientThread: Exiting.");
+            System.out.println("ClientThread (" + Thread.currentThread().getId() + "): Exiting.");
         } catch (final IOException ex) {
-            System.out.println("ClientThread: activeSocket exception: " + ex.getMessage());
+            System.out.println("ClientThread (" + Thread.currentThread().getId() + "): activeSocket exception: "
+                    + ex.getMessage());
         }
         System.out.println("================================================================================");
         System.out.println("================================================================================");
-        System.out.println("ClientThread: Client connection ended");
-        Stats.printStats();
+        System.out.println("ClientThread (" + Thread.currentThread().getId() + "): Client connection ended");
+        stats.printStats();
         System.out.println("================================================================================");
         System.out.println("================================================================================");
     }
